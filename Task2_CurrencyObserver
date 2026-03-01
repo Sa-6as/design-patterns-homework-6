@@ -1,0 +1,136 @@
+import java.util.*;
+
+// Интерфейс наблюдателя
+interface IObserver {
+    void update(String currency, double rate);
+}
+
+// Интерфейс субъекта
+interface ISubject {
+    void addObserver(IObserver observer);
+    void removeObserver(IObserver observer);
+    void notifyObservers(String currency, double rate);
+}
+
+// Субъект - биржа валют
+class CurrencyExchange implements ISubject {
+    private List<IObserver> observers = new ArrayList<>();
+    private Map<String, Double> rates = new HashMap<>();
+
+    @Override
+    public void addObserver(IObserver observer) {
+        observers.add(observer);
+        System.out.println("Наблюдатель добавлен: " + observer);
+    }
+
+    @Override
+    public void removeObserver(IObserver observer) {
+        observers.remove(observer);
+        System.out.println("Наблюдатель удален: " + observer);
+    }
+
+    @Override
+    public void notifyObservers(String currency, double rate) {
+        for (IObserver observer : observers) {
+            observer.update(currency, rate);
+        }
+    }
+
+    public void setRate(String currency, double rate) {
+        double oldRate = rates.getOrDefault(currency, 0.0);
+        rates.put(currency, rate);
+        System.out.println("\n--- Курс " + currency + " изменился: " + oldRate + " -> " + rate + " ---");
+        notifyObservers(currency, rate);
+    }
+
+    public double getRate(String currency) {
+        return rates.getOrDefault(currency, 0.0);
+    }
+}
+
+// Наблюдатель - обычный трейдер
+class Trader implements IObserver {
+    private String name;
+
+    public Trader(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public void update(String currency, double rate) {
+        System.out.println("[Трейдер " + name + "] Курс " + currency + " сейчас: " + rate);
+    }
+
+    @Override
+    public String toString() {
+        return "Трейдер " + name;
+    }
+}
+
+// Наблюдатель - банк
+class Bank implements IObserver {
+    private String bankName;
+
+    public Bank(String bankName) {
+        this.bankName = bankName;
+    }
+
+    @Override
+    public void update(String currency, double rate) {
+        double margin = rate * 1.02;
+        System.out.println("[Банк " + bankName + "] Курс " + currency + ": " + rate +
+                ", продажа клиентам по: " + String.format("%.2f", margin));
+    }
+
+    @Override
+    public String toString() {
+        return "Банк " + bankName;
+    }
+}
+
+// Наблюдатель - мобильное приложение
+class MobileApp implements IObserver {
+    private String appName;
+
+    public MobileApp(String appName) {
+        this.appName = appName;
+    }
+
+    @Override
+    public void update(String currency, double rate) {
+        System.out.println("[Приложение " + appName + "] Push-уведомление: " +
+                currency + " = " + rate);
+    }
+
+    @Override
+    public String toString() {
+        return "Приложение " + appName;
+    }
+}
+
+// Главный класс
+public class Task2_CurrencyObserver {
+    public static void main(String[] args) {
+        CurrencyExchange exchange = new CurrencyExchange();
+
+        Trader trader = new Trader("Асхат");
+        Bank bank = new Bank("Халык Банк");
+        MobileApp app = new MobileApp("KaspiApp");
+
+        System.out.println("=== Подписка наблюдателей ===");
+        exchange.addObserver(trader);
+        exchange.addObserver(bank);
+        exchange.addObserver(app);
+
+        System.out.println("\n=== Обновление курсов ===");
+        exchange.setRate("USD/KZT", 475.50);
+        exchange.setRate("EUR/KZT", 520.30);
+
+        System.out.println("\n=== Удаляем банк из подписчиков ===");
+        exchange.removeObserver(bank);
+
+        System.out.println("\n=== Новое обновление курсов ===");
+        exchange.setRate("USD/KZT", 478.20);
+        exchange.setRate("RUB/KZT", 5.10);
+    }
+}
